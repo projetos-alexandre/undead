@@ -1,0 +1,37 @@
+name: 'Deploy para VPS'
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Build da aplicação'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            APP_DIR="${{ secrets.APP_DIR }}"
+            REPO_URL="${{ secrets.REPO_URL }}"
+
+            echo "Acessando diretório da aplicação"
+            cd "$APP_DIR"
+
+            echo "Sincronizando a aplicação"
+            if [ -d ".git" ]; then
+              git pull
+            else
+              git clone "$REPO_URL" .
+            fi
+
+            echo "Instalando dependências e construindo a aplicação"
+            npm install
+
+            echo "Construindo a aplicação"
+            node ace build
