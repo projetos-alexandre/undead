@@ -1,3 +1,4 @@
+import Ticker from '#models/ticker'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
 
@@ -22,21 +23,26 @@ export class IndicatorService {
 
     const rows: Row[] = []
 
-    table.find('tbody tr').each((_, row) => {
+    for (const row of table.find('tbody tr').toArray()) {
       const rowData: Row = {}
 
-      $(row)
-        .find('td')
-        .each((i, col) => {
-          const originalKey = headers[i]
-          const mappedKey = columns?.[originalKey] ?? originalKey
-          // console.log($(col).text().trim())
-          console.log(mappedKey)
-          rowData[mappedKey] = $(col).text().trim()
-        })
+      for (const [i, col] of $(row).find('td').toArray().entries()) {
+        const originalKey = headers[i]
+        if (originalKey === 'Papel') {
+          let ticker = await Ticker.firstOrCreate(
+            { symbol: $(col).text().trim() },
+            { symbol: $(col).text().trim() }
+          )
+          console.log(`Ticker ID: ${ticker.id} - Symbol: ${ticker.symbol}`)
+        }
+        const mappedKey = columns?.[originalKey] ?? originalKey
+        // console.log($(col).text().trim())
+        // console.log(mappedKey)
+        rowData[mappedKey] = $(col).text().trim()
+      }
 
       rows.push(rowData)
-    })
+    }
 
     return [{ response: rows, status: 'ok' }]
   }
