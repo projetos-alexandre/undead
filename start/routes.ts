@@ -17,4 +17,4 @@ router.get('/', async () => {
 })
 
 // Indicators routes
-router.get('indicators/update', [IndicatorsController, 'update'])
+router.get('indicators/logs', [IndicatorsController, 'logs'])
