@@ -1,11 +1,13 @@
-import Database from '@adonisjs/lucid/services/db'
 import StockFundamentalIndicator from '#models/stock_fundamental_indicator'
 import fs from 'fs'
 
 export class IndicatorService {
   async logs() {
     const logs = await fs.promises.readFile('./coletor.log', 'utf-8')
-    return logs
+
+    const lastLines = logs.trim().split(/\r?\n/).slice(-50).join('\n')
+
+    return lastLines
   }
 
   async stocks() {
