@@ -18,7 +18,12 @@ router.get('/', async () => {
 })
 
 // Indicators routes
-router.get('indicators/logs', [IndicatorsController, 'logs'])
+router
+  .group(() => {
+    router.get('/logs', [IndicatorsController, 'logs'])
+    router.get('/stocks', [IndicatorsController, 'stocks'])
+  })
+  .prefix('indicators')
 
 // Tickers routes
 

@@ -5,7 +5,12 @@ import { inject } from '@adonisjs/core'
 @inject()
 export default class IndicatorsController {
   constructor(protected indicatorService: IndicatorService) {}
+
   logs() {
     return this.indicatorService.logs()
+  }
+
+  stocks() {
+    return this.indicatorService.stocks()
   }
 }
