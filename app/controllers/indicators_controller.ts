@@ -1,7 +1,11 @@
 // import type { HttpContext } from '@adonisjs/core/http'
+import { IndicatorService } from '#services/indicator_service'
+import { inject } from '@adonisjs/core'
 
+@inject()
 export default class IndicatorsController {
+  constructor(protected indicatorService: IndicatorService) {}
   update() {
-    return [{ status: 'ok' }]
+    return this.indicatorService.update()
   }
 }
