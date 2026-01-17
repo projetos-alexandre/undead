@@ -1,8 +1,32 @@
+import StockFundamentalIndicator from '#models/stock_fundamental_indicator'
 import Ticker from '#models/ticker'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
 
 type Row = Record<string, string>
+type StockFundamentalPayload = Partial<{
+  tickerId: number
+  price: number
+  peRatio: number
+  pbRatio: number
+  psRatio: number
+  dividendYield: number
+  priceToAssets: number
+  priceToWorkingCapital: number
+  priceToEbit: number
+  priceToCurrentAssets: number
+  evToEbit: number
+  evToEbitda: number
+  ebitMargin: number
+  netMargin: number
+  roic: number
+  roe: number
+  currentRatio: number
+  avgLiquidity2Months: number
+  netEquity: number
+  grossDebtToEquity: number
+  revenueGrowth5y: number
+}>
 
 export class IndicatorService {
   async update() {
@@ -10,8 +34,8 @@ export class IndicatorService {
     const header = this.getHeader()
     const columns = this.getAcoesColumns()
 
-    const response = await axios.get(url, { headers: header })
-    const html = response.data as string
+    const response = await axios.get(url, { headers: header, responseType: 'arraybuffer' })
+    const html = new TextDecoder('iso-8859-1').decode(response.data)
 
     const $ = cheerio.load(html)
     const table = $('table').first()
@@ -25,6 +49,8 @@ export class IndicatorService {
 
     for (const row of table.find('tbody tr').toArray()) {
       const rowData: Row = {}
+      let stockFundamentalIndicator = new StockFundamentalIndicator()
+      let payload: StockFundamentalPayload = {}
 
       for (const [i, col] of $(row).find('td').toArray().entries()) {
         const originalKey = headers[i]
@@ -33,13 +59,22 @@ export class IndicatorService {
             { symbol: $(col).text().trim() },
             { symbol: $(col).text().trim() }
           )
-          console.log(`Ticker ID: ${ticker.id} - Symbol: ${ticker.symbol}`)
+          payload.tickerId = ticker.id
         }
-        const mappedKey = columns?.[originalKey] ?? originalKey
-        // console.log($(col).text().trim())
-        // console.log(mappedKey)
+        let mappedKey = columns?.[originalKey] ?? originalKey
+
+        if (mappedKey !== 'ticker') {
+          payload[mappedKey as keyof StockFundamentalPayload] = this.parseValue(
+            $(col).text().trim()
+          )
+        }
+
         rowData[mappedKey] = $(col).text().trim()
       }
+
+      stockFundamentalIndicator.fill(payload)
+
+      await stockFundamentalIndicator.save()
 
       rows.push(rowData)
     }
@@ -61,27 +96,49 @@ export class IndicatorService {
 
   getAcoesColumns(): Record<string, string> {
     return {
-      'Papel': 'papel',
-      'Cotação': 'cotacao',
-      'P/L': 'pl',
-      'P/VP': 'pvp',
-      'PSR': 'psr',
-      'Div.Yield': 'dividend_yield',
-      'P/Ativo': 'p_ativo',
-      'P/Cap.Giro': 'p_cap_giro',
-      'P/EBIT': 'p_ebit',
-      'P/Ativ Circ.Liq': 'p_ativ_circ_liqs',
-      'EV/EBIT': 'ev_ebit',
-      'EV/EBITDA': 'ev_ebitda',
-      'Mrg Ebit': 'mrg_ebit',
-      'Mrg. Líq.': 'mrg_liq',
+      'Papel': 'ticker',
+      'Cotação': 'price',
+      'P/L': 'peRatio',
+      'P/VP': 'pbRatio',
+      'PSR': 'psRatio',
+      'Div.Yield': 'dividendYield',
+      'P/Ativo': 'priceToAssets',
+      'P/Cap.Giro': 'priceToWorkingCapital',
+      'P/EBIT': 'priceToEbit',
+      'P/Ativ Circ.Liq': 'priceToCurrentAssets',
+      'EV/EBIT': 'evToEbit',
+      'EV/EBITDA': 'evToEbitda',
+      'Mrg Ebit': 'ebitMargin',
+      'Mrg. Líq.': 'netMargin',
       'ROIC': 'roic',
       'ROE': 'roe',
-      'Liq. Corr.': 'liq_corr',
-      'Liq.2meses': 'liq_2_meses',
-      'Patrim. Líq': 'patrim_liq',
-      'Dív.Brut/ Patrim.': 'div_brut_patrim',
-      'Cresc. Rec.5a': 'cresc_rec_5_a',
+      'Liq. Corr.': 'currentRatio',
+      'Liq.2meses': 'avgLiquidity2Months',
+      'Patrim. Líq': 'netEquity',
+      'Dív.Brut/ Patrim.': 'grossDebtToEquity',
+      'Cresc. Rec.5a': 'revenueGrowth5y',
     }
+  }
+
+  parseValue(value: string): number | undefined {
+    if (!value || value === '-') return undefined
+
+    // Remove % e espaços
+    let cleaned = value.replace('%', '').trim()
+
+    // Remove pontos (separador de milhar) e troca vírgula por ponto (decimal)
+    cleaned = cleaned.replace(/\./g, '').replace(',', '.')
+
+    const parsed = Number(cleaned)
+
+    // Verifica se o número é válido
+    if (isNaN(parsed) || !isFinite(parsed)) return undefined
+
+    // Para percentuais, divide por 100
+    if (value.includes('%')) {
+      return parsed / 100
+    }
+
+    return parsed
   }
 }
