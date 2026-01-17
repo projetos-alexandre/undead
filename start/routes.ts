@@ -8,6 +8,7 @@
 */
 
 import IndicatorsController from '#controllers/indicators_controller'
+import TickersController from '#controllers/tickers_controller'
 import router from '@adonisjs/core/services/router'
 
 router.get('/', async () => {
@@ -18,3 +19,11 @@ router.get('/', async () => {
 
 // Indicators routes
 router.get('indicators/logs', [IndicatorsController, 'logs'])
+
+// Tickers routes
+
+router
+  .group(() => {
+    router.get('/', [TickersController, 'index'])
+  })
+  .prefix('tickers')
