@@ -51,5 +51,5 @@ jobs:
 
             echo "➡️ Subindo aplicação com PM2"
             pm2 delete undead || true
-            pm2 start ecosystem.config.js
+            pm2 start ecosystem.config.cjs
             pm2 save
