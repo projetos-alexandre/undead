@@ -25,5 +25,6 @@ router.get('indicators/logs', [IndicatorsController, 'logs'])
 router
   .group(() => {
     router.get('/', [TickersController, 'index'])
+    router.get('/:id', [TickersController, 'show'])
   })
   .prefix('tickers')
