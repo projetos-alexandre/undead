@@ -46,8 +46,13 @@ jobs:
             echo "➡️ Instalando dependências"
             npm install
 
+            echo "➡️ Rodando migrações"
+            node ace migration:run --force
+
             echo "➡️ Build da aplicação"
             node ace build
+
+            cp .env build/.env
 
             echo "➡️ Subindo aplicação com PM2"
             pm2 delete undead || true
