@@ -1,5 +1,4 @@
-// import type { HttpContext } from '@adonisjs/core/http'
-
+import type { HttpContext } from '@adonisjs/core/http'
 import Ticker from '#models/ticker'
 
 export default class TickersController {
@@ -7,8 +6,7 @@ export default class TickersController {
     return await Ticker.all()
   }
 
-  async show({ params }: { params: { id: string } }) {
-    const ticker = await Ticker.findOrFail(params.id)
-    return ticker
+  async show({ params }: HttpContext) {
+    return await Ticker.findOrFail(params.id)
   }
 }
